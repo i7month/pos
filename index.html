@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .container {
+            text-align: center;
+            font-size: 30px;
+            line-height: 50px;
+            height: 90vh;
+            overflow-y:hidden;
+        }
+        .loading{
+            height: 100vh;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<!--    <div class="goIE">跳转ie</div>-->
+<!--    <div class="payCost">pos缴费</div>-->
+   <div class="close">正在pos缴费</div>
+
+    <div class="container">
+        <div style="color: red;">请勿触碰屏幕!!!</div>
+        <div>缴费进行中,请在pos机上进行操作</div>
+        <!-- <div class="loading"><img src="./5-121204193R7-51.gif"  alt=""></div> -->
+        <OBJECT id=DUmsocx1 classid=clsid:F704E0FC-AA80-4559-987B-32587D020B82>
+            <PARAM NAME="_ExtentX" VALUE="7000">
+            <PARAM NAME="_ExtentY" VALUE="4000">
+        </OBJECT>
+    </div>
+    <script src="./jquery.min.js"></script>
+    <script>
+
+
+        window.onload = function(){
+
+
+            // ********** 上来就请求  测试关闭是否好使
+            var formData = new FormData()
+            formData.append("transactionid",1)
+            formData.append("taxId",2)
+            formData.append("seatNumber",3)
+            formData.append("posParam","456")
+            $.ajax({
+                type:"POST",
+                contentType: false,
+                processData: false,
+                url:"https://taxdemo.lnch-tech.com:17990/ddsw/pos/saveAndPosParam",
+                data:formData,
+                success : function(result) {
+                    window.opener = window;
+                    var win = window.open("","_self");
+                    win.close();
+                    //frame的时候
+                    top.close();
+                },
+                error : function(e){
+                }
+            })
+            // ********** 上来就请求  测试关闭是否好使
+
+
+
+            
+
+            // 获取浏览器传过来的id
+            var cont = document.querySelector('.cont');
+            function getLocal() {
+                var url = window.location.search; //获取url中"?"符后的字串
+                var theRequest = []
+                if (url.indexOf("?") != -1) {
+                    var str = url.substr(1);
+                    var strs = str.split("=");
+                    var arr = strs[1].split(',')
+                    for(var i = 0;i<arr.length;i++){
+                        theRequest.push(arr[i])
+                    }
+                }
+                return theRequest;
+            }
+            // 传过来的3个id 1. transactionid 2.idNumber 3.siteNum
+            var arr = getLocal();
+
+
+            getTranidInfo()
+            // 不足 位数 前补 0
+            function PrefixInteger(num, length) {
+                return (Array(length).join('0') + num).slice(-length);
+            }
+            // 补空格 a=参数  b=总共位数
+            function getSpace(a,b){
+                var str = a+''
+                if(str.length<b){
+                    var num = b-str.length
+                    for(var i=0;i<num;i++){
+                        str+=" ";
+                    }
+                }
+                return str
+            }
+            // var  str = '00交易成功                                          **********                          321066210500010213                                        12106020000 321066210500010213  2021050768713234011226306016  0606110000                            丹东北泰建筑工程有限公司                LRCE0FD4BD5075A0242E040170A820406660200000002012091709170001'
+            //
+            // // 截取
+            // alert(str.substring(0,2))// 交易代码00
+            // alert(str.substring(2,6))// 交易成功提示交易成功
+            // alert(str.substring(84,104))// 321066210500010213 外部申报电子序号
+            // alert(str.substring(142,154)) // 12106020000 征收机关代码
+            // alert(str.substring(154,174))// 321066210500010213 票号
+            // alert(str.substring(174,182))// 20210507 日期
+            // alert(str.substring(182,190))// 68713234 原交易流水号
+            // alert(str.substring(190,204))// 011226306016   银行卡号
+            // alert(str.substring(204,214))// 0606110000   国库代码
+
+
+            
+            function getTranidInfo(){
+                $.ajax({
+                    type : "POST",
+                    // contentType: false,
+                    // processData: false,
+                    url : "https://ddsw.lnch-tech.com:17991/ddsw/tax/getQrCodeControl?type=1&transactionid="+arr[0],
+                    success : function(res) {
+                        if(res.param){
+                            getQueryOrder(getSpace(res.param.nsrsbh,20),getSpace(res.param.swjgDm,12),getSpace(res.param.dzsphm,20),PrefixInteger(parseFloat(res.param.sjse)*100,12))
+                            // param:
+                            //     appid: ""
+                            // createTime: "2021-04-29 09:57:56"
+                            // dzsphm: "应征凭证序号"
+                            // extendInfo: ""
+                            // id: "50d6e90aa88e11eb8cc30050568c50a9"
+                            // nsrmc: "丹东市烟草公司凤城分公司"
+                            // nsrsbh: "纳税人识别号" 纳税人编码10 20
+                            // payTaxOrMoney: "tax"
+                            // sbrq: "2021/04/13"
+                            // sjse: "99.99"
+                            // swjgDm: "机关代码"
+                            // timestamp: ""
+                            // transactionid: "135136"
+                        }
+                    },
+                    error : function(e){
+                        console.log(e)
+                    }
+                })
+            }
+            
+
+
+
+            function getQueryOrder(j,h,i,d){
+                    var a = '        ' // 收银员号1 8
+                    var b = '        ' // 操作员号2 8
+                    var c = '07' // 交易类型3 2
+                    var d = d // 金额4 12
+                    var e = '        ' // 原交易日期5 8
+                    var f = '            ' // 原系统参考号6 12
+                    var g = '      ' // 原凭证号7 6
+                    var h = h // 征收机关代码8 12 ---------
+                    var i = i // 外部申报电子序号9 20
+                    var j = j // 纳税人编码10 20  ---------
+                    var k = '              ' // 收款行行号11 14
+                    var l = '                                ' // 付款账号12 32
+                    var m = '1' // 流程代码13 1
+                    var n = '                  ' // 税票号14 18 ---------
+                    var o = '                                        ' // 缴税单位名称15 40
+                    var p = '            ' // 原征收机关代码16 12
+                    var q = '        ' // 委托日期17 8
+                    var r = '        ' // 原交易流水号18 8
+                    var s = '          ' // 国库代码19 10
+                    var t = '        ' // 扣税日期20 8
+                    var u = '                    ' // 税种名称21 20
+                    var v = '                                        ' // 纳税人名称22 40
+                    var w = '                                                                                                                                                                                                                                                                ' // 预留信息23 256
+                    var x = 'LRC' // 交易校验数据24 3
+                    DUmsocx1.bankrequest=a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r+s+t+u+v+w+x
+                    DUmsocx1.trans ();
+                    var str = DUmsocx1.BankResponse
+                    // var str = '00交易成功                                          **********                          321066210500010213                                        12106020000 321066210500010213  2021050768713234011226306016  0606110000                            丹东北泰建筑工程有限公司                LRCE0FD4BD5075A0242E040170A820406660200000002012091709170001'
+                    if(str.substring(0,2) == '00'){
+                            c = '08'
+                            i = str.substring(84,104)
+                            n = str.substring(84,102)
+                            h = str.substring(142,154)
+                            p = str.substring(142,154)
+                            q = str.substring(174,182)
+                            e = str.substring(174,182)
+                            t = str.substring(174,182)
+                            r = str.substring(182,190)
+                            k = str.substring(190,204)
+                            s = str.substring(204,214)
+                            console.log(a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r+s+t+u+v+w+x)
+                            DUmsocx1.bankrequest=a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r+s+t+u+v+w+x
+                            DUmsocx1.trans ();
+                            var formData = new FormData()
+                            formData.append("transactionid",arr[0])
+                            formData.append("taxId",arr[1])
+                            formData.append("seatNumber",arr[2])
+                            formData.append("posParam",DUmsocx1.BankResponse)
+                            $.ajax({
+                                type:"POST",
+                                // contentType: false,
+                                // processData: false,
+                                url:"https://taxdemo.lnch-tech.com:17990/ddsw/pos/saveAndPosParam",
+                                data:formData,
+                                success : function(result) {
+                                    window.opener = window;
+                                    var win = window.open("","_self");
+                                    win.close();
+                                    //frame的时候
+                                    top.close();
+                                },
+                                error : function(e){
+                                }
+                            })
+                    }else{
+                        window.opener = window;
+                        var win = window.open("","_self");
+                        win.close();
+                        //frame的时候
+                        top.close();
+                    }
+                }
+            }
+
+
+
+
+
+        // // 跳转ie客户端
+        // var goie = document.querySelector('.goIE')
+        // goie.onclick = function(){
+        //     var str = 11 + ',' + 22 + ',' + 33
+        // window.location.href = 'openIE:file:///C:/gmc/index.html?str='+str;
+        // }
+        // 点击关闭客户端
+        // var close = document.querySelector('.close')
+        // close.onclick= function(){
+        //         window.opener = window;
+        //         var win = window.open("","_self");
+        //         win.close();
+        //         //frame的时候
+        //         top.close();
+        // }
+        // }
+
+
+
+    </script>
+</body>
+
+</html>
